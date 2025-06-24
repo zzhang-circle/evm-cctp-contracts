@@ -87,22 +87,9 @@ contract TokenMessengerV2Test is BaseTokenMessengerTest {
     address denylister = address(60);
     address proxyAdmin = address(70);
     address rescuer = address(80);
-    address minFeeController = address(90);
-
-    uint256 minFee = 1;
 
     MockMintBurnToken localToken = new MockMintBurnToken();
     TokenMinterV2 localTokenMinter = new TokenMinterV2(tokenController);
-
-    TokenMessengerV2.TokenMessengerV2Roles roles =
-        TokenMessengerV2.TokenMessengerV2Roles({
-            owner: owner,
-            rescuer: rescuer,
-            feeRecipient: feeRecipient,
-            denylister: denylister,
-            tokenMinter: address(localTokenMinter),
-            minFeeController: minFeeController
-        });
 
     function setUp() public override {
         // Deploy implementation
@@ -126,8 +113,11 @@ contract TokenMessengerV2Test is BaseTokenMessengerTest {
         ) = _defaultRemoteTokenMessengers();
 
         TokenMessengerV2(address(_proxy)).initialize(
-            roles,
-            0,
+            owner,
+            rescuer,
+            feeRecipient,
+            denylister,
+            address(localTokenMinter),
             _remoteDomains,
             _remoteTokenMessengers
         );
@@ -201,15 +191,11 @@ contract TokenMessengerV2Test is BaseTokenMessengerTest {
         ) = _defaultRemoteTokenMessengers();
 
         TokenMessengerV2(address(_proxy)).initialize(
-            TokenMessengerV2.TokenMessengerV2Roles({
-                owner: address(0),
-                rescuer: rescuer,
-                feeRecipient: feeRecipient,
-                denylister: denylister,
-                tokenMinter: address(localTokenMinter),
-                minFeeController: minFeeController
-            }),
-            minFee,
+            address(0),
+            rescuer,
+            feeRecipient,
+            denylister,
+            address(localTokenMinter),
             _remoteDomains,
             _remoteTokenMessengers
         );
@@ -229,15 +215,11 @@ contract TokenMessengerV2Test is BaseTokenMessengerTest {
 
         vm.expectRevert("Rescuable: new rescuer is the zero address");
         TokenMessengerV2(address(_proxy)).initialize(
-            TokenMessengerV2.TokenMessengerV2Roles({
-                owner: owner,
-                rescuer: address(0),
-                feeRecipient: feeRecipient,
-                denylister: denylister,
-                tokenMinter: address(localTokenMinter),
-                minFeeController: minFeeController
-            }),
-            minFee,
+            owner,
+            address(0),
+            feeRecipient,
+            denylister,
+            address(localTokenMinter),
             _remoteDomains,
             _remoteTokenMessengers
         );
@@ -257,15 +239,11 @@ contract TokenMessengerV2Test is BaseTokenMessengerTest {
 
         vm.expectRevert("Zero address not allowed");
         TokenMessengerV2(address(_proxy)).initialize(
-            TokenMessengerV2.TokenMessengerV2Roles({
-                owner: owner,
-                rescuer: rescuer,
-                feeRecipient: address(0),
-                denylister: denylister,
-                tokenMinter: address(localTokenMinter),
-                minFeeController: minFeeController
-            }),
-            minFee,
+            owner,
+            rescuer,
+            address(0),
+            denylister,
+            address(localTokenMinter),
             _remoteDomains,
             _remoteTokenMessengers
         );
@@ -285,15 +263,11 @@ contract TokenMessengerV2Test is BaseTokenMessengerTest {
 
         vm.expectRevert("Denylistable: new denylister is the zero address");
         TokenMessengerV2(address(_proxy)).initialize(
-            TokenMessengerV2.TokenMessengerV2Roles({
-                owner: owner,
-                rescuer: rescuer,
-                feeRecipient: feeRecipient,
-                denylister: address(0),
-                tokenMinter: address(localTokenMinter),
-                minFeeController: minFeeController
-            }),
-            minFee,
+            owner,
+            rescuer,
+            feeRecipient,
+            address(0),
+            address(localTokenMinter),
             _remoteDomains,
             _remoteTokenMessengers
         );
@@ -313,64 +287,11 @@ contract TokenMessengerV2Test is BaseTokenMessengerTest {
 
         vm.expectRevert("Zero address not allowed");
         TokenMessengerV2(address(_proxy)).initialize(
-            TokenMessengerV2.TokenMessengerV2Roles({
-                owner: owner,
-                rescuer: rescuer,
-                feeRecipient: feeRecipient,
-                denylister: denylister,
-                tokenMinter: address(0),
-                minFeeController: minFeeController
-            }),
-            minFee,
-            _remoteDomains,
-            _remoteTokenMessengers
-        );
-    }
-
-    function testInitialize_revertsIfMinFeeControllerIsZeroAddress() public {
-        AdminUpgradableProxy _proxy = new AdminUpgradableProxy(
-            address(tokenMessengerImpl),
-            proxyAdmin,
-            bytes("")
-        );
-
-        (
-            uint32[] memory _remoteDomains,
-            bytes32[] memory _remoteTokenMessengers
-        ) = _defaultRemoteTokenMessengers();
-
-        vm.expectRevert("Zero address not allowed");
-        TokenMessengerV2(address(_proxy)).initialize(
-            TokenMessengerV2.TokenMessengerV2Roles({
-                owner: owner,
-                rescuer: rescuer,
-                feeRecipient: feeRecipient,
-                denylister: denylister,
-                tokenMinter: address(localTokenMinter),
-                minFeeController: address(0)
-            }),
-            minFee,
-            _remoteDomains,
-            _remoteTokenMessengers
-        );
-    }
-
-    function testInitialize_revertsIfMinFeeTooHigh() public {
-        AdminUpgradableProxy _proxy = new AdminUpgradableProxy(
-            address(tokenMessengerImpl),
-            proxyAdmin,
-            bytes("")
-        );
-
-        (
-            uint32[] memory _remoteDomains,
-            bytes32[] memory _remoteTokenMessengers
-        ) = _defaultRemoteTokenMessengers();
-
-        vm.expectRevert("Min fee too high");
-        TokenMessengerV2(address(_proxy)).initialize(
-            roles,
-            MIN_FEE_MULTIPLIER,
+            owner,
+            rescuer,
+            feeRecipient,
+            denylister,
+            address(0),
             _remoteDomains,
             _remoteTokenMessengers
         );
@@ -397,8 +318,11 @@ contract TokenMessengerV2Test is BaseTokenMessengerTest {
 
         vm.expectRevert("Invalid remote domain configuration");
         TokenMessengerV2(address(_proxy)).initialize(
-            roles,
-            minFee,
+            owner,
+            rescuer,
+            feeRecipient,
+            denylister,
+            address(localTokenMinter),
             _remoteDomains,
             _remoteTokenMessengers
         );
@@ -423,8 +347,11 @@ contract TokenMessengerV2Test is BaseTokenMessengerTest {
 
         vm.expectRevert("bytes32(0) not allowed");
         TokenMessengerV2(address(_proxy)).initialize(
-            roles,
-            minFee,
+            owner,
+            rescuer,
+            feeRecipient,
+            denylister,
+            address(localTokenMinter),
             _remoteDomains,
             _remoteTokenMessengers
         );
@@ -441,8 +368,11 @@ contract TokenMessengerV2Test is BaseTokenMessengerTest {
         bytes32[] memory _remoteTokenMessengers = new bytes32[](0);
 
         TokenMessengerV2(address(_proxy)).initialize(
-            roles,
-            minFee,
+            owner,
+            rescuer,
+            feeRecipient,
+            denylister,
+            address(localTokenMinter),
             _remoteDomains,
             _remoteTokenMessengers
         );
@@ -456,8 +386,11 @@ contract TokenMessengerV2Test is BaseTokenMessengerTest {
 
         vm.expectRevert("Initializable: invalid initialization");
         localTokenMessenger.initialize(
-            roles,
-            minFee,
+            owner,
+            rescuer,
+            feeRecipient,
+            denylister,
+            address(localTokenMinter),
             _remoteDomains,
             _remoteTokenMessengers
         );
@@ -486,32 +419,6 @@ contract TokenMessengerV2Test is BaseTokenMessengerTest {
         );
     }
 
-    function testInitialize_setsTheMinFee() public {
-        TokenMessengerV2 tokenMessenger = TokenMessengerV2(
-            address(
-                new AdminUpgradableProxy(
-                    address(tokenMessengerImpl),
-                    proxyAdmin,
-                    bytes("")
-                )
-            )
-        );
-
-        (
-            uint32[] memory _remoteDomains,
-            bytes32[] memory _remoteTokenMessengers
-        ) = _defaultRemoteTokenMessengers();
-
-        tokenMessenger.initialize(
-            roles,
-            minFee,
-            _remoteDomains,
-            _remoteTokenMessengers
-        );
-
-        assertEq(tokenMessenger.minFee(), minFee);
-    }
-
     function testInitialize_setsSingleRemoteTokenMessenger() public view {
         assertEq(
             bytes32(localTokenMessenger.remoteTokenMessengers(remoteDomain)),
@@ -535,8 +442,11 @@ contract TokenMessengerV2Test is BaseTokenMessengerTest {
         );
 
         TokenMessengerV2(address(_proxy)).initialize(
-            roles,
-            minFee,
+            owner,
+            rescuer,
+            feeRecipient,
+            denylister,
+            address(localTokenMinter),
             _remoteDomains,
             _remoteTokenMessengers
         );
@@ -565,8 +475,11 @@ contract TokenMessengerV2Test is BaseTokenMessengerTest {
             proxyAdmin,
             abi.encodeWithSelector(
                 TokenMessengerV2.initialize.selector,
-                roles,
-                minFee,
+                owner,
+                rescuer,
+                feeRecipient,
+                denylister,
+                address(localTokenMinter),
                 _remoteDomains,
                 _remoteTokenMessengers
             )
@@ -624,14 +537,14 @@ contract TokenMessengerV2Test is BaseTokenMessengerTest {
         emit LocalMinterAdded(address(localTokenMinter));
 
         vm.expectEmit(true, true, true, true);
-        emit MinFeeSet(minFee);
-
-        vm.expectEmit(true, true, true, true);
         emit RemoteTokenMessengerAdded(remoteDomain, remoteTokenMessengerAddr);
 
         _tokenMessenger.initialize(
-            roles,
-            minFee,
+            owner,
+            rescuer,
+            feeRecipient,
+            denylister,
+            address(localTokenMinter),
             _remoteDomains,
             _remoteTokenMessengers
         );
@@ -1003,88 +916,20 @@ contract TokenMessengerV2Test is BaseTokenMessengerTest {
         );
     }
 
-    function testDepositForBurn_revertsIfInsufficientMaxFee(
-        uint256 _amount,
-        bytes32 _mintRecipient,
-        bytes32 _destinationCaller,
-        uint256 _maxFee,
-        uint256 _minFee,
-        uint32 _minFinalityThreshold
-    ) public {
-        vm.assume(_mintRecipient != bytes32(0));
-        _minFee = bound(_minFee, 1, MIN_FEE_MULTIPLIER - 1);
-        _amount = _boundAmountForMinFee(_amount, _minFee);
-        vm.assume(_maxFee < _getMinFeeAmount(_amount, _minFee));
-
-        // Set minFee to be greater than maxFee
-        vm.prank(minFeeController);
-        localTokenMessenger.setMinFee(_minFee);
-
-        _setupDepositForBurn(address(this), _amount, _amount + 1);
-
-        vm.expectRevert("Insufficient max fee");
-        localTokenMessenger.depositForBurn(
-            _amount,
-            destinationDomain,
-            _mintRecipient,
-            address(localToken),
-            _destinationCaller,
-            _maxFee,
-            _minFinalityThreshold
-        );
-    }
-
-    function testDepositForBurn_revertsIfMinFeeOverflow(
-        uint256 _amount,
-        bytes32 _mintRecipient,
-        bytes32 _destinationCaller,
-        uint256 _minFee,
-        uint32 _minFinalityThreshold
-    ) public {
-        vm.assume(_mintRecipient != bytes32(0));
-        // minFee has to be at least 2 to cause overflow
-        _minFee = bound(_minFee, 2, MIN_FEE_MULTIPLIER - 1);
-        _amount = _boundOverflowAmountForMinFee(_amount, _minFee);
-
-        // Set minFee
-        vm.prank(minFeeController);
-        localTokenMessenger.setMinFee(_minFee);
-
-        _setupDepositForBurn(address(this), _amount, _amount + 1);
-
-        vm.expectRevert("SafeMath: multiplication overflow");
-        localTokenMessenger.depositForBurn(
-            _amount,
-            destinationDomain,
-            _mintRecipient,
-            address(localToken),
-            _destinationCaller,
-            _amount - 1,
-            _minFinalityThreshold
-        );
-    }
-
     function testDepositForBurn_succeeds(
         uint256 _amount,
         uint256 _burnLimit,
         bytes32 _mintRecipient,
         bytes32 _destinationCaller,
         uint32 _minFinalityThreshold,
-        address _caller,
-        uint256 _minFee
+        address _caller
     ) public {
         vm.assume(_mintRecipient != bytes32(0));
-        vm.assume(_caller != address(0));
-        _minFee = bound(_minFee, 0, MIN_FEE_MULTIPLIER - 1);
-        // adjust amount bounds depending on minFee
-        _amount = _boundAmountForMinFee(_amount, _minFee);
+        vm.assume(_amount > 1);
         vm.assume(_amount < _burnLimit);
+        vm.assume(_caller != address(0));
 
         uint256 _maxFee = _amount - 1;
-
-        // Set minFee
-        vm.prank(minFeeController);
-        localTokenMessenger.setMinFee(_minFee);
 
         _setupDepositForBurn(_caller, _amount, _burnLimit);
 
@@ -1325,41 +1170,6 @@ contract TokenMessengerV2Test is BaseTokenMessengerTest {
         );
     }
 
-    function testDepositForBurnWithHook_revertsIfInsufficientMaxFee(
-        uint256 _amount,
-        bytes32 _mintRecipient,
-        bytes32 _destinationCaller,
-        uint256 _maxFee,
-        uint256 _minFee,
-        uint32 _minFinalityThreshold,
-        bytes calldata _hookData
-    ) public {
-        vm.assume(_mintRecipient != bytes32(0));
-        _minFee = bound(_minFee, 1, MIN_FEE_MULTIPLIER - 1);
-        // amount has to be at least 2 if non-zero minFee
-        _amount = _boundAmountForMinFee(_amount, _minFee);
-        vm.assume(_maxFee < _getMinFeeAmount(_amount, _minFee));
-        vm.assume(_hookData.length > 0);
-
-        // Set minFee
-        vm.prank(minFeeController);
-        localTokenMessenger.setMinFee(_minFee);
-
-        _setupDepositForBurn(address(this), _amount, _amount + 1);
-
-        vm.expectRevert("Insufficient max fee");
-        localTokenMessenger.depositForBurnWithHook(
-            _amount,
-            destinationDomain,
-            _mintRecipient,
-            address(localToken),
-            _destinationCaller,
-            _maxFee,
-            _minFinalityThreshold,
-            _hookData
-        );
-    }
-
     function testDepositForBurnWithHook_revertsIfNoRemoteTokenMessengerExistsForDomain(
         uint256 _amount,
         uint32 _remoteDomain,
@@ -1533,23 +1343,17 @@ contract TokenMessengerV2Test is BaseTokenMessengerTest {
         bytes32 _destinationCaller,
         uint32 _minFinalityThreshold,
         bytes calldata _hookData,
-        address _caller,
-        uint256 _minFee
+        address _caller
     ) public {
         vm.assume(_mintRecipient != bytes32(0));
-        vm.assume(_caller != address(0));
-        _minFee = bound(_minFee, 0, MIN_FEE_MULTIPLIER - 1);
-        // adjust amount bounds depending on minFee
-        _amount = _boundAmountForMinFee(_amount, _minFee);
+        vm.assume(_amount > 1);
         vm.assume(_amount < _burnLimit);
         vm.assume(_hookData.length > 0);
+        vm.assume(_caller != address(0));
 
         uint256 _maxFee = _amount - 1;
 
         _setupDepositForBurn(_caller, _amount, _burnLimit);
-
-        vm.prank(minFeeController);
-        localTokenMessenger.setMinFee(_minFee);
 
         _depositForBurn(
             _caller,
@@ -2851,44 +2655,6 @@ contract TokenMessengerV2Test is BaseTokenMessengerTest {
             _finalityThresholdExecuted,
             _messageBody
         );
-    }
-
-    function testGetMinFee_returnsMinFee(
-        uint256 _amount,
-        uint256 _minFee
-    ) public {
-        _minFee = bound(_minFee, 0, MIN_FEE_MULTIPLIER - 1);
-        _amount = _boundAmountForMinFee(_amount, _minFee);
-        vm.prank(minFeeController);
-        localTokenMessenger.setMinFee(_minFee);
-
-        uint256 minFeeAmount = localTokenMessenger.getMinFeeAmount(_amount);
-        assertEq(minFeeAmount, _getMinFeeAmount(_amount, _minFee));
-    }
-
-    function testGetMinFee_revertsIfAmountTooLow(uint256 _minFee) public {
-        _minFee = bound(_minFee, 1, MIN_FEE_MULTIPLIER - 1);
-        vm.prank(minFeeController);
-        localTokenMessenger.setMinFee(_minFee);
-
-        vm.expectRevert("Amount too low");
-        localTokenMessenger.getMinFeeAmount(0);
-        vm.expectRevert("Amount too low");
-        localTokenMessenger.getMinFeeAmount(1);
-    }
-
-    function testGetMinFee_revertsIfAmountTooHigh(
-        uint256 _amount,
-        uint256 _minFee
-    ) public {
-        // minFee has to be at least 2 to cause overflow
-        _minFee = bound(_minFee, 2, MIN_FEE_MULTIPLIER - 1);
-        _amount = _boundOverflowAmountForMinFee(_amount, _minFee);
-        vm.prank(minFeeController);
-        localTokenMessenger.setMinFee(_minFee);
-
-        vm.expectRevert("SafeMath: multiplication overflow");
-        localTokenMessenger.getMinFeeAmount(_amount);
     }
 
     // Test helpers
